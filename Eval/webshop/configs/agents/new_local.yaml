@@ -1,0 +1,4 @@
+module: src.client.agents.NewLocal
+parameters:
+  name: mixtral-8x7b-instruct-v01
+  temperature: 0.5

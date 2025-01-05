@@ -1,0 +1,8 @@
+USER: Please evaluate whether your last response achieves the "Navigation Intent" or not.
+
+Here's the information you'll have:
+The current web page screenshot: This is a screenshot of the webpage, with each interactable element assigned a unique numerical id. Each bounding box and its respective id shares the same color.
+The observation, which lists the IDs of all interactable elements on the current web page with their text content if any, in the format [id] [tagType] [text content]. tagType is the type of the element, such as button, link, or textbox. text content is the text content of the element.
+{factual_prompt}
+
+ASSISTANT: Following your definitions, the score of my last response is

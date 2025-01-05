@@ -1,0 +1,34 @@
+default:
+  module: src.server.tasks.webshop_docker.WebShop
+  parameters:
+      concurrency: 1
+  docker:
+    #image: longinyu/agentbench-webshop3
+    #image: zfchen2021/agentbench-webshop
+    image: zfchen2021/agentbench-webshop
+    command: ln -s /root/webshop /root/workspace/src/server/tasks/webshop_docker;cp /root/workspace/src/server/tasks/webshop/__init__.py /root/webshop/__init__.py;
+
+webshop-test:
+  parameters:
+    name: webshop-dev
+    start: 200
+    end: 210
+
+webshop-dev:
+  parameters:
+    name: webshop-dev
+    start: 200
+    end: 280
+
+webshop-std:
+  parameters:
+    name: webshop-std
+    start: 0
+    end: 200
+
+webshop-train:
+  parameters:
+    name: webshop-train
+    start: 0
+    end: 8300
+    #end: 500

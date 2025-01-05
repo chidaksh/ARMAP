@@ -1,0 +1,1 @@
+python -m src.assigner -c configs/assignments/new_llama8b_base.yaml

@@ -1,0 +1,33 @@
+import: definition.yaml
+
+concurrency:
+  task:
+    webshop-std: 1
+  agent:
+    new_llama8b_sample0: 1
+    new_llama8b_sample1: 1
+    new_llama8b_sample2: 1
+    new_llama8b_sample3: 1
+    new_llama8b_sample4: 1
+    new_llama8b_sample5: 1
+    new_llama8b_sample6: 1
+    new_llama8b_sample7: 1
+    new_llama8b_sample8: 1
+    new_llama8b_sample9: 1
+
+assignments:
+  - agent:
+      - new_llama8b_sample0
+      - new_llama8b_sample1
+      - new_llama8b_sample2
+      - new_llama8b_sample3
+      - new_llama8b_sample4
+      - new_llama8b_sample5
+      - new_llama8b_sample6
+      - new_llama8b_sample7
+      - new_llama8b_sample8
+      - new_llama8b_sample9
+    task:
+      - webshop-std
+
+output: "outputs/new_llama8b_sample"

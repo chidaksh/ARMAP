@@ -1,0 +1,339 @@
+gpt-3.5-turbo-0613:
+    import: "./openai-chat.yaml"
+    parameters:
+        name: "gpt-3.5-turbo-0613"
+        body:
+            model: "gpt-3.5-turbo-0613"
+            max_tokens: 512
+
+text-davinci-003:
+    import: "./openai-text.yaml"
+    parameters:
+        name: "text-davinci-003"
+        body:
+            model: "text-davinci-003"
+            max_tokens: 512
+
+text-davinci-002:
+    import: "./openai-text.yaml"
+    parameters:
+        name: "text-davinci-002"
+        body:
+            model: "text-davinci-002"
+            max_tokens: 512
+gemini:
+    import: "./gemini.yaml"
+    parameters:
+        name: "gemini-pro-vision"
+
+
+gpt4omini_base:
+    import: "./openai-chat.yaml"
+    parameters:
+        name: "gpt-4o-mini"
+        body:
+            model: "gpt-4o-mini"
+            max_tokens: 150
+
+gpt3_base:
+    import: "./openai-chat.yaml"
+    parameters:
+        name: "gpt-3.5-turbo"
+        body:
+            model: "gpt-3.5-turbo"
+            max_tokens: 150
+
+
+new_llama8b_base:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+        temperature: 0
+
+
+new_llama8b_sample0:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+new_llama8b_sample1:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+new_llama8b_sample2:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+new_llama8b_sample3:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+new_llama8b_sample4:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+new_llama8b_sample5:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+new_llama8b_sample6:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+new_llama8b_sample7:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+new_llama8b_sample8:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+new_llama8b_sample9:
+    import: "./new_local.yaml"
+    parameters:
+        name: meta-llama/Meta-Llama-3.1-8B-Instruct
+
+
+new_llama70b_base:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+        temperature: 0
+
+
+new_llama70b_sample0:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+new_llama70b_sample1:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+new_llama70b_sample2:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+new_llama70b_sample3:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+new_llama70b_sample4:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+new_llama70b_sample5:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+new_llama70b_sample6:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+new_llama70b_sample7:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+new_llama70b_sample8:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+new_llama70b_sample9:
+    import: "./new_local.yaml"
+    parameters:
+        name: hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
+
+
+new_mixtral_base:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+        temperature: 0
+
+new_mixtral_sample0:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+new_mixtral_sample1:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+new_mixtral_sample2:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+new_mixtral_sample3:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+new_mixtral_sample4:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+new_mixtral_sample5:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+new_mixtral_sample6:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+new_mixtral_sample7:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+new_mixtral_sample8:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+new_mixtral_sample9:
+    import: "./new_local.yaml"
+    parameters:
+        name: casperhansen/mixtral-instruct-awq
+
+
+new_mixtral_original_base:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mixtral-8x7B-Instruct-v0.1
+        temperature: 0
+
+
+new_mistral_base:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+        temperature: 0
+
+
+new_mistral_sample0:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_mistral_sample1:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_mistral_sample2:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_mistral_sample3:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_mistral_sample4:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_mistral_sample5:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_mistral_sample6:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_mistral_sample7:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_mistral_sample8:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_mistral_sample9:
+    import: "./new_local.yaml"
+    parameters:
+        name: mistralai/Mistral-7B-Instruct-v0.3
+
+new_phi_base:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+        temperature: 0
+
+
+new_phi_sample0:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+
+new_phi_sample1:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+
+new_phi_sample2:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+
+new_phi_sample3:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+
+new_phi_sample4:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+
+new_phi_sample5:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+
+new_phi_sample6:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+
+new_phi_sample7:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+
+new_phi_sample8:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct
+
+new_phi_sample9:
+    import: "./new_local.yaml"
+    parameters:
+        name: microsoft/Phi-3.5-mini-instruct

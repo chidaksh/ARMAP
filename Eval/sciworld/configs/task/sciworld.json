@@ -1,0 +1,13 @@
+{
+    "task": {
+        "task_class": "SciWorldTask"
+    },
+    "env_config": {
+        "env_class": "SciWorldEnv",
+        "instruction_path": "prompt/instructions/sciworld_inst_ibm.txt",
+        "env_jar_path": "/nobackup/users/zfchen/cdl/ScienceWorld_Planning/envs/scienceworld/scienceworld.jar",
+        "icl_path": "prompt/icl_examples/sciworld_icl.json",
+        "icl_format": "conversation",
+        "max_steps": 10
+    }
+}

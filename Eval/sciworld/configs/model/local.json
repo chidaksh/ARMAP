@@ -1,0 +1,12 @@
+{
+    "agent_class": "LocalAgent",
+    "config": {
+        "model_name": "llama-3-70b-instruct",
+        "temperature": 1,
+        "top_p": 1,
+        "top_k": 40,
+        "max_new_tokens": 150,
+        "min_new_tokens": 20,
+        "data_gen": false
+    }
+}

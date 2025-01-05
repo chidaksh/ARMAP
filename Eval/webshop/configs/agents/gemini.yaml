@@ -1,0 +1,3 @@
+module: src.client.agents.Gemini
+parameters:
+  name: <% NAME %>

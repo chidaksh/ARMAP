@@ -1,0 +1,15 @@
+import: definition.yaml
+
+concurrency:
+  task:
+    webshop-std: 1
+  agent:
+    new_llama8b_base: 3
+
+assignments:
+  - agent:
+      - new_llama8b_base
+    task:
+      - webshop-std
+
+output: "outputs/new_llama8b_base"

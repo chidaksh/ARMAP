@@ -1,0 +1,8 @@
+definition:
+  import: tasks/task_assembly.yaml
+
+start:
+  webshop-std: 2
+  # webshop-std: 2
+#  webshop-train: 4
+#  webshop-train: 3
