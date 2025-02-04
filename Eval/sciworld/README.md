@@ -38,4 +38,18 @@ python scripts/ARMAP-B/calc_sample.py outputs/llama8b_sample_seen 12345
 
 ### ARMAP-M
 
-TBD
+
+#### port transfer
+```
+bash script/ARMAP-M/trans_local_llm.sh
+bash script/ARMAP-M/trans_rm.sh
+```
+
+#### mcts
+```
+bash script/ARMAP-M/run_mcts.sh
+```
+#### performance analysis
+```
+python scripts/ARMAP-M/test_sampling.py
+```
