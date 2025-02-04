@@ -196,7 +196,7 @@ class WebShop(Task):
             "action_history": ["None"],
             "memory": []
         }
-        max_num_attempts = 3
+        max_num_attempts = 10
         for trail_idx in range(max_num_attempts):
             history = []
             env = self.env
@@ -325,7 +325,7 @@ class WebShop(Task):
             session.inject(
                 {
                     "role": "user",
-                    "content": f"reflection"
+                    "content": "$reflection$"
                 }
             )
             reflection = await session.action()

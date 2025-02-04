@@ -26,7 +26,15 @@ bash scripts/Sampling/new_llama8b_sample.sh
 
 ### ARMAP-R
 
-TBD
+First, replace Eval/webshop/src/server/tasks/webshop/_\_init__.py with __init__re.py, restart the task server.
+```
+python -m src.start_task -a
+```
+
+Then, run the process to obtain the ARMAP-R results.
+```
+bash scripts/ARMAP-R/new_llama8b_ref.sh
+```
 
 ### ARMAP-B
 

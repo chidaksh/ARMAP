@@ -92,6 +92,14 @@ class NewLocal(AgentClient):
     def inference(self, history: List[dict]) -> str:
         prompt = ""
         image_input = ""
+        history_ori = history
+        if "$reflection$" in history[-1]["content"]:
+            with open(
+                    'PATH_TO_reflection_few_shot_examples.txt',
+                    'r', encoding='utf-8') as file:
+                file_content = file.read()
+            prompt = file_content
+            history = history_ori[:-1]
         for message in history:
             if message["role"] == "user":
                 
