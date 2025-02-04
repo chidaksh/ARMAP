@@ -27,7 +27,6 @@ for sub_dir in os.listdir(dir):
         cnt += 1
         sample = json.load(open(os.path.join(dir, sub_dir, file)))
 
-    # for idx, sample in enumerate(tracks['tracks']):
         dir_id = int(sub_dir.split('_')[-1])
         image_id = int(file.split('_')[0])
         task_id = int(file.split('_')[1].split('.')[0])
@@ -40,7 +39,6 @@ for sub_dir in os.listdir(dir):
         for i, conv in enumerate(sample['conversations']):
             s += conv['value']
             if 'Task Description:' in conv['value']:
-    
                 if begin != -1:
                     begin = -1
                     break
@@ -48,12 +46,10 @@ for sub_dir in os.listdir(dir):
         if begin == -1:
             continue
 
-        
 
         correct_history = sample['conversations'][begin:]
 
         if len(correct_history) == 1:
-            # print(idx)
             continue
 
         action = correct_history[0]['value']
@@ -70,7 +66,6 @@ for sub_dir in os.listdir(dir):
         })
 
         total_len = 0
-        
 
         output_1 = []
         for i, conv in enumerate(correct_history):
@@ -105,16 +100,12 @@ for sub_dir in os.listdir(dir):
 
         test_data.append(dict(
             id=idx,
-            image='not_used.png',
             conversations=conversations,
             output_1=output_1,
             output_2=output_1,
             preference=1,
             score=score,
         ))
-    # print(cnt)
-# print(mx)
-# json.dump(test_data, open(preference_list_save, 'w'), indent=2)
 
 def encode_image(image, encoding_format="PNG"):
     buffered = BytesIO()
@@ -125,35 +116,21 @@ def encode_image(image, encoding_format="PNG"):
 
 encoding_format="PNG"
 
-# url = 'http://59.66.26.196:5678/api/generate'
-#url = 'http://172.30.150.30:15678/api/generate'
+
 url = f'http://0.0.0.0:{port}/api/generate'
 
 images = {}
 
-image_folder = '/nobackup/users/zfchen/cdl/LLaVA-RLHF/data/data_wj/eval'
-
-image_a = 'not_used.png'
-
-images['not_used.png'] = Image.open(os.path.join(image_folder, image_a))
-
-
-# preference_data = './test_science_wolrd_mcts.json'
-# preference_data = open(preference_data).read()
-
 preference_data = json.dumps(test_data)
 
 factual_data = '''{
-    "not_used.png" : [
-        "not_used"
-    ]
 }
 '''
-prompt = '''USER: Current screenshot: <image>. Observation: {observation0}. Navigation Intent: {Intent}
+prompt = '''USER: Observation: {observation0}. Navigation Intent: {Intent}
 
 ASSISTANT: {response0}
 
-USER: Current screenshot: <image>. Observation: {observation1}.
+USER: Observation: {observation1}.
 
 ASSISTANT: {response1}
 
@@ -183,13 +160,12 @@ headers = {
     "User-Agent": "BLIP-2 HuggingFace Space",
 }
 response = requests.post(url, data=data, files=files, headers=headers)
-# print(response.content)
+
 decoded_string = response.content.decode('utf-8')
 import json
 import numpy as np
 score_list = json.loads(decoded_string)
 
-# print(score_list)
 
 rewards_dict = {}
 
@@ -208,7 +184,6 @@ for sample, reward in zip(preference_data, score_list):
 
 json.dump(save_data, open(os.path.join(dir, 'save_reward.json'), 'w'), indent=2)
 
-# import pdb; pdb.set_trace()
 
 avg = np.mean([np.mean([y[1] for y in x]) for x in rewards_dict.values()])
 mx = np.mean([np.max([y[1] for y in x]) for x in rewards_dict.values()])
