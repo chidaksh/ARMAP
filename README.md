@@ -1,10 +1,10 @@
-# ARMAP: Autonomous Agents from Automatic Reward Modeling And Planning
+# ARMAP: Scaling Autonomous Agents via Automatic Reward Modeling And Planning
 
 [ [Project Page](https://armap-agent.github.io) | [Paper](TBD) ]
 
 ![teaser](assets/teaser.svg)
 
-This repository contains the official code for ARMAP: Autonomous Agents from Automatic Reward Modeling And Planning
+This repository contains the official code for ARMAP: Scaling Autonomous Agents via Automatic Reward Modeling And Planning
 
 ## Reward Model
 Reward model training pipline is provided in [the reward model directory](./RM).
@@ -22,5 +22,13 @@ After starting the reward model server, please refer to the eval folder for each
 ## Citation
 If you use this work or find it helpful, please consider citing: (bibtex)
 ```
-TBD
+@misc{chen2025scalingautonomousagentsautomatic,
+      title={Scaling Autonomous Agents via Automatic Reward Modeling And Planning}, 
+      author={Zhenfang Chen and Delin Chen and Rui Sun and Wenjun Liu and Chuang Gan},
+      year={2025},
+      eprint={2502.12130},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2502.12130}, 
+}
 ```

@@ -13,7 +13,7 @@ pip install -r requirements.txt
 ## Prepare Models and Datas
 Download [`VILA1.5-3b`](https://huggingface.co/Efficient-Large-Model/VILA1.5-3b/tree/main) and put it into `rm`.
 
-Download training data of Webshop, SciWorld and Game24, and put them into `data`
+Download training data of [`Webshop`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-WebShop), [`SciWorld`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-SciWorld), [`Game24`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-Game24) and [`ALFWorld`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-ALFWorld), and put them into `data`
 
 ## Train Reward Model
 
@@ -28,6 +28,10 @@ bash scripts/train_reward_webshop.sh
 ### sciworld
 ```
 bash scripts/train_reward_sciworld.sh
+```
+### alfworld
+```
+bash scripts/train_reward_alfworld.sh
 ```
 
 ## Start Reward Model Server
