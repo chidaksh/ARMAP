@@ -1,6 +1,6 @@
 # ARMAP: Scaling Autonomous Agents via Automatic Reward Modeling And Planning
 
-[ [Project Page](https://armap-agent.github.io) | [Paper](TBD) ]
+[ [Project Page](https://armap-agent.github.io) | [Paper](https://arxiv.org/abs/2502.12130) | [Model Weights](https://huggingface.co/Heaplax/ARMAP-RM-LoRA)]
 
 ![teaser](assets/teaser.svg)
 

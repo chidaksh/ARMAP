@@ -13,7 +13,9 @@ pip install -r requirements.txt
 ## Prepare Models and Datas
 Download [`VILA1.5-3b`](https://huggingface.co/Efficient-Large-Model/VILA1.5-3b/tree/main) and put it into `rm`.
 
-Download training data of [`Webshop`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-WebShop), [`SciWorld`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-SciWorld), [`Game24`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-Game24) and [`ALFWorld`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-ALFWorld), and put them into `data`
+If you don't want to train the model, we provide pre-trained [LoRA checkpoints](https://huggingface.co/Heaplax/ARMAP-RM-LoRA), which you can download and place in the `rm` folder.
+
+Otherwise, download training data of [`Webshop`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-WebShop), [`SciWorld`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-SciWorld), [`Game24`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-Game24) and [`ALFWorld`](https://huggingface.co/datasets/Heaplax/ARMAP-RM-ALFWorld), and put them into `data`
 
 ## Train Reward Model
 
