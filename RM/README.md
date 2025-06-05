@@ -5,13 +5,16 @@ Firstly, install dependencies of [LLaVA-RLHF](https://github.com/llava-rlhf/LLaV
 
 Then:
 ```
-pip install -e git+ssh://git@github.com/Efficient-Large-Model/VILA.git@d7d54bc4ca1e582f59516ba2f94a0217ad2430a0#egg=vila
+pip install -e git+https://github.com/Efficient-Large-Model/VILA.git@d7d54bc4ca1e582f59516ba2f94a0217ad2430a0#egg=vila
 
 pip install -r requirements.txt
 ```
 
+Finally, replace `LLaVA/llava/model/multimodal_encoder` with `modifications/multimodal_encoder`.
+
+
 ## Prepare Models and Datas
-Download [`VILA1.5-3b`](https://huggingface.co/Efficient-Large-Model/VILA1.5-3b/tree/main) and put it into `rm`.
+Download [`VILA1.5-3b`](https://huggingface.co/Efficient-Large-Model/VILA1.5-3b/tree/main) and put it into `rm`. Replace `VILA1.5-3b/llm/config.json` with `modifications/config.json`.
 
 If you don't want to train the model, we provide pre-trained [LoRA checkpoints](https://huggingface.co/Heaplax/ARMAP-RM-LoRA), which you can download and place in the `rm` folder.
 
