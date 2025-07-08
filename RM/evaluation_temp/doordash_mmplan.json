@@ -1,0 +1,42 @@
+[
+  {
+    "id": "eval_example_2",
+    "instruction": "What are the top-10 restaurants by orders on DoorDash, considering only successfully delivered orders?",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "You are an analytics expert with access to DoorDash's data warehouse, and your task is to find the top 10 restaurants by delivered orders."
+      },
+      {
+        "from": "llava",
+        "value": "Thought: I need to get all orders and count them per restaurant. I will not filter by status initially, assuming all orders count. Action: execute_sql_query[\"SELECT r.restaurant_name, COUNT(o.id) AS total_order_count FROM orders o JOIN restaurants r ON o.restaurant_id = r.id GROUP BY r.restaurant_name ORDER BY total_order_count DESC LIMIT 10;\"]"
+      },
+      {
+        "from": "human",
+        "value": "Observation: The SQL query executed successfully. Results: [{\"restaurant_name\": \"Burgers & Bites\", \"total_order_count\": 1500}, {\"restaurant_name\": \"Pizza Palace\", \"total_order_count\": 1400}, ... (8 more entries)]. Note: This count includes pending and cancelled orders."
+      },
+      {
+        "from": "llava",
+        "value": "Thought: The results show total orders, but the instruction specified 'successfully delivered orders'. This output is not precise enough. I need to refine the query. Action: re-evaluate_plan"
+      }
+    ],
+    "output_1": [
+      {
+        "from": "human",
+        "value": "You are an analytics expert with access to DoorDash's data warehouse, and your task is to find the top 10 restaurants by delivered orders."
+      },
+      {
+        "from": "llava",
+        "value": "Thought: I need to get all orders and count them per restaurant. I will not filter by status initially, assuming all orders count. Action: execute_sql_query[\"SELECT r.restaurant_name, COUNT(o.id) AS total_order_count FROM orders o JOIN restaurants r ON o.restaurant_id = r.id GROUP BY r.restaurant_name ORDER BY total_order_count DESC LIMIT 10;\"]"
+      },
+      {
+        "from": "human",
+        "value": "Observation: The SQL query executed successfully. Results: [{\"restaurant_name\": \"Burgers & Bites\", \"total_order_count\": 1500}, {\"restaurant_name\": \"Pizza Palace\", \"total_order_count\": 1400}, ... (8 more entries)]. Note: This count includes pending and cancelled orders."
+      },
+      {
+        "from": "llava",
+        "value": "Thought: The results show total orders, but the instruction specified 'successfully delivered orders'. This output is not precise enough. I need to refine the query. Action: re-evaluate_plan"
+      }
+    ]
+  }
+]

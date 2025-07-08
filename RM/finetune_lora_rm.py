@@ -334,6 +334,7 @@ def train():
         )
 
     model.backbone_model.config.use_cache = False
+    model.backbone_model.config.cache_shape = (4096, 4096)
     print_trainable_parameters(args, model)
     print("loaded model")
 
@@ -341,9 +342,20 @@ def train():
         from llava.model import LlavaLlamaForCausalLM
 
         with DisableLogger():
-        #if True:
+            from transformers import AutoConfig
+            import os
+
+            config = AutoConfig.from_pretrained(model_args.model_name_or_path)
+
+            if hasattr(config, "mm_vision_tower") and not os.path.isabs(config.mm_vision_tower):
+                main_model_dir = os.path.dirname(model_args.model_name_or_path.rstrip('/'))
+                vision_tower_path = os.path.join(main_model_dir, 'vision_tower')
+                print(f"Correcting mm_vision_tower path for temporary model to: {vision_tower_path}")
+                config.mm_vision_tower = vision_tower_path
+
             model_tmp = LlavaLlamaForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
+                config=config,
                 cache_dir=training_args.cache_dir,
             )
 

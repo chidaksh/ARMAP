@@ -258,7 +258,6 @@ def preprocess_llama_2(
         if roles[source[0]["from"]] != conv.roles[0]:
             # Skip the first one if it is not from human
             source = source[1:]
-
         conv.messages = []
         for j, sentence in enumerate(source):
             role = roles[sentence["from"]]
@@ -374,7 +373,7 @@ def preprocess_v1(
         if roles[source[0]["from"]] != conv.roles[0]:
             # Skip the first one if it is not from human
             source = source[1:]
-
+        # breakpoint()
         conv.messages = []
         obs_idx = 0
         for j, sentence in enumerate(source):

@@ -1,5 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+
+# Large files
+*.zip
+*.pt
+*.pth
+*.ckpt
+
+# Data & Output
+data/
+output/
+
+# Other
 info.txt
-__pycache__
 TODO.txt
-data
-rm
+
+# Embedded Repositories
+AgentBench/
+RM/ARMAP-RM-LoRA/
+RM/RM-alfworld/
+RM/RM-game24/
+RM/RM-sciworld/
+RM/RM-webshop/
+RM/RM-pavo/
+RM/VILA1.5-3b/llm
+RM/VILA1.5-3b/mm_projector
+RM/VILA1.5-3b/vision_tower
+# Ignore LLaVA but keep the llava subfolder
+LLaVA/
+# !/LLaVA/llava/model

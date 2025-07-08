@@ -15,10 +15,12 @@
 from argparse import Namespace
 from typing import Optional
 from os.path import join, exists
+import os
 
 import torch
 import bitsandbytes as bnb
-from transformers import BitsAndBytesConfig
+from transformers import BitsAndBytesConfig, AutoConfig
+from llava.model import LlavaLlamaForCausalLM
 
 from peft import (
     prepare_model_for_kbit_training,
@@ -27,7 +29,6 @@ from peft import (
     PeftModelForCausalLM,
 )
 from peft.tuners.lora import LoraLayer
-from llava.model import LlavaLlamaForCausalLM
 
 REGISTERED_BASE_MODELS = {}
 
@@ -59,6 +60,7 @@ def get_accelerate_model(
     is_trainable=True,
     reuse_base_model=False,
     tokenizer=None,
+    **kwargs,
 ):
     global REGISTERED_BASE_MODELS
 
@@ -107,17 +109,9 @@ def get_accelerate_model(
     if args.full_finetune:
         assert args.bits in [16, 32]
 
-    print(f"loading base model {args.model_name_or_path}...")
-    # model = LlavaLlamaForCausalLM.from_pretrained(
-    #     args.model_name_or_path,
-    # )
-
-    model = LlavaLlamaForCausalLM.from_pretrained(
-        args.model_name_or_path,
-        load_in_4bit=args.bits == 4,
-        load_in_8bit=args.bits == 8,
-        # device_map={"": current_device},
-        quantization_config=BitsAndBytesConfig(
+    quantization_config = None
+    if args.bits in [4, 8]:
+        quantization_config = BitsAndBytesConfig(
             load_in_4bit=args.bits == 4,
             load_in_8bit=args.bits == 8,
             llm_int8_threshold=6.0,
@@ -126,16 +120,50 @@ def get_accelerate_model(
             bnb_4bit_use_double_quant=args.double_quant,
             bnb_4bit_quant_type=args.quant_type,
             llm_int8_skip_modules=["mm_projector", "lm_head"],
-        ),
-        torch_dtype=(
-            torch.float32
-            if args.fp16
-            else (torch.bfloat16 if args.bf16 else torch.float32)
-        ),
-        trust_remote_code=args.trust_remote_code,
+        )
+    else:
+        assert args.bits in [16, 32]
+
+    print(f"loading base model {args.model_name_or_path}...")
+
+    # Expert Fix: Correct the vision tower path at runtime.
+    # 1. Load config first
+    config = AutoConfig.from_pretrained(args.model_name_or_path)
+
+    # 2. Check and correct the mm_vision_tower path if it's relative
+    if hasattr(config, "mm_vision_tower") and not os.path.isabs(config.mm_vision_tower):
+        # Construct the correct path relative to the main model directory
+        main_model_dir = os.path.dirname(args.model_name_or_path.rstrip('/'))
+        vision_tower_path = os.path.join(main_model_dir, 'vision_tower')
+        print(f"Correcting mm_vision_tower path to: {vision_tower_path}")
+        config.mm_vision_tower = vision_tower_path
+
+    # 3. Load the model with the corrected configuration
+    model = LlavaLlamaForCausalLM.from_pretrained(
+        args.model_name_or_path,
+        config=config,
+        load_in_4bit=args.bits == 4,
+        load_in_8bit=args.bits == 8,
+        torch_dtype=torch.bfloat16 if args.bits == 16 else torch.float32,
+        # device_map={"": current_device},
+        quantization_config=quantization_config,
+        trust_remote_code=True,
     )
+
+    # Definitive Breakthrough Fix: Align vision_tower dtype with the quantization compute_dtype.
+    # When using 4-bit quantization, the bnb_4bit_compute_dtype is bfloat16 by default.
+    # The unquantized vision_tower must be cast to this same dtype to prevent mismatches.
+    # breakpoint()
+    # if args.bits == 4:
+    #     compute_dtype = torch.bfloat16  # As defined in the BitsAndBytesConfig
+    #     vision_tower = model.get_vision_tower()
+    #     if vision_tower is not None and vision_tower.dtype != compute_dtype:
+    #         print(f"Casting vision tower to {compute_dtype} to match quantization compute dtype.")
+    #         model.get_model().vision_tower = vision_tower.to(compute_dtype)
+
     # import pdb
     # pdb.set_trace()
+    # breakpoint()
     if compute_dtype == torch.float16 and args.bits == 4:
         major, minor = torch.cuda.get_device_capability()
         if major >= 8:
@@ -219,6 +247,7 @@ def get_accelerate_model(
             if hasattr(module, "weight"):
                 if args.bf16 and module.weight.dtype == torch.float32:
                     module = module.to(torch.bfloat16)
+    # breakpoint()
     return model
 
 
