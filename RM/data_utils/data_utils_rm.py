@@ -79,6 +79,11 @@ def preprocess_for_reward_modeling(
         [[dict_data['id']] for dict_data in list_dict_data]
     )
 
+    if 'company_id' in list_dict_data[0]:
+        company_id = torch.tensor(
+            [[dict_data['company_id']] for dict_data in list_dict_data]
+        )
+
     def _get_text(example: dict, output_key: str):
         # HACK(sheng):, hack for V1, LLaMA2
         _s = copy.deepcopy(example["conversations"])
@@ -155,6 +160,9 @@ def preprocess_for_reward_modeling(
         merged_valid=merged_valid,
         metadata=dict(mean_choice=choice.float().mean().item()),
     )
+
+    if 'company_id' in list_dict_data[0]:
+        packaged_data["company_id"] = company_id
 
     return packaged_data
 
@@ -441,14 +449,19 @@ class DataCollatorForBinaryRewardModelingDataset(object):
         else:
             batch["image2"] = []
 
-        return batch
+        if "company_id" in instances[0]:
+            company_id = torch.stack([instance["company_id"] for instance in instances])
+            batch["company_id"] = company_id
 
+        return batch
 
 def make_binary_reward_modeling_data_module(
     tokenizer: transformers.PreTrainedTokenizer,
     data_args,
     training_args,
-    do_train = True,
+    persona_model=None,
+    persona_tokenizer=None,
+    knowledge_base_path=None,
 ):
     if data_args.dataset_path.endswith("json"):
         train_preference = load_dataset("json", data_files=data_args.dataset_path)[
@@ -486,7 +499,17 @@ def make_binary_reward_modeling_data_module(
     else:
         eval_dataset = train_dataset
 
-    data_collator = DataCollatorForBinaryRewardModelingDataset(tokenizer=tokenizer)
+    if persona_model and persona_tokenizer and knowledge_base_path:
+        data_collator = PersonaAwareDataCollator(
+            tokenizer=tokenizer,
+            persona_model=persona_model,
+            persona_tokenizer=persona_tokenizer,
+            knowledge_base_path=knowledge_base_path,
+            max_length=training_args.model_max_length,
+        )
+    else:
+        data_collator = DataCollatorForBinaryRewardModelingDataset(tokenizer=tokenizer)
+
     return dict(
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,

@@ -3,12 +3,12 @@
 set -e
 set -x
 
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=0,1
 export DATA_DIR="data"
 export MODEL_DIR="rm"
 export PYTHONPATH="$PWD:$PYTHONPATH"
-export GPUS_PER_NODE=1
-export OMP_NUM_THREADS=1
+export GPUS_PER_NODE=2
+export OMP_NUM_THREADS=2
 export CUDA_LAUNCH_BLOCKING=1
 
 # MODEL CONFIG
@@ -30,7 +30,7 @@ LEARNING_RATE=2e-5
 BATCH_SIZE=1
 GRAD_ACCUMULATION=4
 
-python finetune_lora_rm.py \
+python RM/finetune_lora_rm.py \
     --do_train \
     --do_eval \
     --seed 42 \
