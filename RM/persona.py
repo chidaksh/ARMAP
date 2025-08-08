@@ -9,10 +9,6 @@ import json
 logger = logging.getLogger(__name__)
 
 class PersonaEncoderDecoder(nn.Module):
-    """
-    Encodes a persona's domain knowledge into a continuous embedding
-    and decodes that embedding into a classification of persona type.
-    """
     def __init__(self, model_name="microsoft/deberta-v3-base", embedding_dim=256, num_classes=3, use_lora=False, lora_config=None):
         super().__init__()
         self.model_name = model_name
@@ -20,15 +16,12 @@ class PersonaEncoderDecoder(nn.Module):
         self.num_classes = num_classes
         self.projection_dim = 512
 
-        # --- Encoder Components ---
         self.foundation_model = AutoModel.from_pretrained(model_name)
         if use_lora:
-            # Apply LoRA to the foundation model for efficient fine-tuning
             lora_config = lora_config or LoraConfig(r=16, lora_alpha=32, target_modules=['query_proj', 'value_proj'], lora_dropout=0.05, bias="none")
             self.foundation_model = get_peft_model(self.foundation_model, lora_config)
             logger.info("Enabled LoRA for the foundation model.")
         else:
-            # Freeze foundation model if not using LoRA
             for param in self.foundation_model.parameters():
                 param.requires_grad = False
 
@@ -38,41 +31,27 @@ class PersonaEncoderDecoder(nn.Module):
             nn.Linear(512, self.embedding_dim)
         )
 
-        # --- Decoder Component ---
         self.decoder_classifier = nn.Sequential(
             nn.Linear(self.embedding_dim, 128),
             nn.ReLU(),
             nn.Linear(128, self.num_classes)
         )
 
-        # --- Internal storage for outputs ---
         self._last_embedding = None
         self._last_classification_logits = None
 
     def forward(self, input_ids, attention_mask, labels=None):
-        """
-        Processes the input text and returns logits.
-        If labels are provided, it also returns the CrossEntropyLoss.
-        """
-        # --- Encoding Step ---
         foundation_outputs = self.foundation_model(input_ids=input_ids, attention_mask=attention_mask)
         last_hidden_state = foundation_outputs.last_hidden_state
-
-        # Masked mean pooling
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(last_hidden_state.size()).float()
         sum_embeddings = torch.sum(last_hidden_state * input_mask_expanded, 1)
         sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
         pooled_embedding = sum_embeddings / sum_mask
 
-        # Project to persona embedding
         persona_embedding = self.projection_head(pooled_embedding)
-        self._last_embedding = persona_embedding  # Store for later access
-
-        # --- Decoding Step ---
+        self._last_embedding = persona_embedding
         logits = self.decoder_classifier(persona_embedding)
-        self._last_classification_logits = logits # Store for later access
-
-        # --- Loss Calculation ---
+        self._last_classification_logits = logits 
         loss = None
         if labels is not None:
             loss_fct = nn.CrossEntropyLoss()

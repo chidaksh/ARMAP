@@ -106,6 +106,7 @@ class DataArguments:
     # Arguments for Persona-Aware Reward Model
     persona_model_checkpoint: Optional[str] = field(default=None, metadata={"help": "Path to the trained persona model checkpoint."})
     knowledge_base_path: Optional[str] = field(default=None, metadata={"help": "Path to the directory containing knowledge files."})
+    company_data_path: Optional[str] = field(default=None, metadata={"help": "Path to the company data file."})
 
 
 @dataclass
@@ -269,12 +270,12 @@ def train():
     args = argparse.Namespace(
         **vars(model_args), **vars(data_args), **vars(training_args)
     )
-
+    
+    
     if args.resume_dir is not None:
         checkpoint_dir, completed_training = args.resume_dir, False
     else:
         checkpoint_dir, completed_training = get_last_checkpoint(args.output_dir)
-
     if completed_training:
         rank0_print("Detected that training was already completed!")
 
@@ -327,10 +328,8 @@ def train():
 
     # Load Persona Model if provided
     persona_model, persona_tokenizer = None, None
-    if data_args.persona_model_checkpoint and data_args.knowledge_base_path:
+    if data_args.persona_model_checkpoint:
         from persona import PersonaEncoderDecoder # Make sure to import the class
-        from transformers import AutoTokenizer
-
         logger.info(f"Loading Persona model from {data_args.persona_model_checkpoint}")
         persona_model = PersonaEncoderDecoder.from_pretrained(data_args.persona_model_checkpoint)
         persona_tokenizer = AutoTokenizer.from_pretrained(data_args.persona_model_checkpoint)
@@ -344,9 +343,10 @@ def train():
         model = RewardModel(
             args=args,
             config=config,
-            checkpoint_dir=training_args.output_dir,
+            qlora=True,
+            checkpoint_dir=checkpoint_dir,
             tokenizer=tokenizer,
-            persona_embedding_dim=persona_model.config.hidden_size if persona_model else 0,
+            persona_embedding_dim=persona_model.embedding_dim if persona_model else 256,
         )
 
     model.backbone_model.config.use_cache = False
@@ -392,7 +392,6 @@ def train():
         training_args=training_args,
         persona_model=persona_model,
         persona_tokenizer=persona_tokenizer,
-        knowledge_base_path=data_args.knowledge_base_path,
     )
 
     if args.do_train:
@@ -400,7 +399,7 @@ def train():
         rank0_print("Training data size:", len(training_data))
         rank0_print("Training data example:")
 
-    set_seed(args.seed)
+    set_seed(args.seed)     
 
     trainer = Trainer(
         model=model,

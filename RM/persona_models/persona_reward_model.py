@@ -149,9 +149,11 @@ class RewardModel(transformers.PreTrainedModel):
         checkpoint_dir: Optional[str] = None,
         adapter_name="lora_default",
         tokenizer=None,
+        persona_embedding_dim: int = 256,
         **kwargs,
     ):
-        super(RewardModel, self).__init__(config)
+        super().__init__(config)
+        # self.args = args
         self.adapter_name = adapter_name
         self.backbone_model = make_generative_vlm(
             args,
@@ -161,11 +163,12 @@ class RewardModel(transformers.PreTrainedModel):
             tokenizer=tokenizer,
             **kwargs,
         )
-        hidden_size = get_transformer_hidden_size(self.backbone_model)
-        reward_head = nn.Linear(hidden_size, 1)
-        torch.nn.init.zeros_(reward_head.bias)
+        backbone_hidden_size = get_transformer_hidden_size(self.backbone_model)
+        # The new reward_head accepts the trajectory embedding PLUS the persona embedding
+        self.reward_head = nn.Linear(backbone_hidden_size + persona_embedding_dim, 1)
+        torch.nn.init.zeros_(self.reward_head.bias)
         device = next(self.backbone_model.parameters()).device
-        self.reward_head = reward_head.to(device)
+        self.reward_head = self.reward_head.to(device)
 
         if checkpoint_dir is not None:
             reward_head_path = os.path.join(checkpoint_dir, "reward_head")
@@ -178,29 +181,18 @@ class RewardModel(transformers.PreTrainedModel):
                 )
             else:
                 print(f"Warning: reward head not found at {reward_head_path}")
-
         self.reward_head.requires_grad_(kwargs.get("is_trainable", True))
 
-    def forward(
-        self, input_ids, attention_mask=None, images=None, return_dict=True, **kwargs
-    ):
+    def forward(self, input_ids, persona_embeddings, attention_mask=None, images=None, return_dict=True, **kwargs):
         # We only compute the rewards and don't compute the logistic regression loss in this function so that it's
         # easier to use for later stages of reranking / RL training.
         self.backbone_model.set_adapter(self.adapter_name)
         self.backbone_model.config.use_cache = False
-
-        # print(input_ids.shape, images.shape, 'images', images.dtype)
-#        import pdb; pdb.set_trace()
         outputs = self.backbone_model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            return_dict=True,
-            output_hidden_states=True,
-            images=images,
-            **kwargs,
+            input_ids=input_ids, attention_mask=attention_mask, images=images, return_dict=return_dict, output_hidden_states=True, **kwargs
         )
-        print(outputs)
-        exit(-1)
+        # print(outputs)
+        # exit(-1)
         last_hidden_state = outputs.hidden_states[-1]
         assert isinstance(last_hidden_state, torch.Tensor), f"{outputs}"
         # last_hidden_state = outputs.last_hidden_state
@@ -209,17 +201,60 @@ class RewardModel(transformers.PreTrainedModel):
         last_hidden_state = last_hidden_state + 0.0 * torch.mean(logits)
 
         last_hidden_state_at_the_end = last_hidden_state[:, -1, :]
-        # TODO(lxuechen): Make returning rewards at all positions and last_hidden_state an option.
-        # last_hidden_state_at_the_end = last_hidden_state_at_the_end.type_as(
-        #     next(self.reward_head.parameters()) # HACK(sheng): error with data parallel
-        # )
         last_hidden_state_at_the_end = last_hidden_state_at_the_end.type_as(
             self.reward_head.weight
         )
-        # print(last_hidden_state_at_the_end.device, self.reward_head.weight.device, self.reward_head.bias.device)
-        rewards = self.reward_head(last_hidden_state_at_the_end).squeeze(-1)
-        # import pdb;pdb.set_trace()
+        # Pool the outputs using the hidden state of the last token
+        # pooled_output = hidden_states[:, -1, :]
+
+        # Combine the trajectory embedding with the persona embedding
+        combined_output = torch.cat([last_hidden_state_at_the_end, persona_embeddings], dim=1)
+        # Compute the reward
+        rewards = self.reward_head(combined_output).squeeze(-1)
         return RewardModelOutput(rewards=rewards) if return_dict else (rewards,)
+
+    def forward_v2(
+        self,
+        chosen_input_ids: torch.Tensor,
+        rejected_input_ids: torch.Tensor,
+        persona_embeddings: torch.Tensor,
+        **kwargs,
+    ):
+        """This is the improved 'Smart Model' forward method, preserved for future experiments."""
+        # For efficiency, combine chosen and rejected inputs to run the backbone model only once.
+        input_ids = torch.cat([chosen_input_ids, rejected_input_ids], dim=0)
+        attention_mask = kwargs.get("attention_mask")
+        if attention_mask is not None:
+            # The attention mask also needs to be combined.
+            attention_mask = torch.cat([attention_mask, attention_mask], dim=0)
+
+        # Get hidden states from the backbone model.
+        hidden_states = self.backbone_model(
+            input_ids, attention_mask=attention_mask, **kwargs
+        ).last_hidden_state
+
+        # Pool the outputs using the hidden state of the last token.
+        pooled_output = hidden_states[:, -1, :]
+
+        # Separate the pooled outputs back into chosen and rejected.
+        chosen_trajectory_h, rejected_trajectory_h = torch.chunk(
+            pooled_output, 2, dim=0
+        )
+
+        # Inject the persona embedding by concatenating it with the trajectory embedding.
+        chosen_combined = torch.cat([chosen_trajectory_h, persona_embeddings], dim=-1)
+        rejected_combined = torch.cat(
+            [rejected_trajectory_h, persona_embeddings], dim=-1
+        )
+
+        # Get the final reward scores for each.
+        chosen_rewards = self.reward_head(chosen_combined).squeeze(-1)
+        rejected_rewards = self.reward_head(rejected_combined).squeeze(-1)
+
+        return RewardModelOutput(
+            chosen_rewards=chosen_rewards,
+            rejected_rewards=rejected_rewards,
+        )
 
     def _set_gradient_checkpointing(self, module, value=False):
         if isinstance(module, transformers.LlamaModel):
@@ -280,16 +315,19 @@ class RewardModelTrainer(transformers.Trainer):
 
         super(RewardModelTrainer, self)._save(output_dir, state_dict)
         torch.cuda.empty_cache()
+
     def compute_loss(self, model, inputs, return_outputs=False):
-        # input_ids, attention_mask each of size (bsz, num_candidates, seq_len).
-        # index_0, index_1 each of size (bsz, num_pairs); indexes into input_ids.
-        # choice of size (bsz, num_pairs); 1 if index_1's seq is chosen, 0 otherwise.
-        # torch.autograd.detect_anomaly(check_nan=True)
-        input_ids, attention_mask, index_0, index_1, choice, images,image1,image2 = unpack_dict(
+        # This compute_loss method mirrors the original ARMAP design.
+        # It flattens the chosen/rejected pairs and expands the persona embeddings.
+        input_ids, attention_mask, choice, persona_embeddings = unpack_dict(
+            inputs, keys=("input_ids", "attention_mask", "choice", "persona_embeddings")
+        )
+        input_ids, attention_mask, persona_embeddings, index_0, index_1, choice, images,image1,image2 = unpack_dict(
             inputs,
             keys=(
                 "input_ids",
                 "attention_mask",
+                "persona_embeddings",
                 "index_0",
                 "index_1",
                 "choice",
@@ -317,22 +355,28 @@ class RewardModelTrainer(transformers.Trainer):
             images = torch.ones(1, 3, 384, 384).to(torch.bfloat16)
             images = images.unsqueeze(1).repeat(1, input_ids.size(1), 1, 1, 1)
             images = einops.rearrange(images, "b n h w c -> (b n) h w c")
-
-        num_candidates, num_pairs = input_ids.size(1), choice.size(1)
+            
+        num_candidates = input_ids.size(1)
+        # Flatten the batch
         input_ids_flat, attention_mask_flat = tuple(
             einops.rearrange(x, "b c l -> (b c) l") for x in (input_ids, attention_mask)
         )
+        # Expand persona embeddings to match the flattened batch
+        persona_embeddings_flat = persona_embeddings.unsqueeze(1).repeat(1, num_candidates, 1)
+        persona_embeddings_flat = einops.rearrange(persona_embeddings_flat, "b c h -> (b c) h")
 
-        outputs = model(
-            input_ids=input_ids_flat, attention_mask=attention_mask_flat, images=images
-        )
+        # Get rewards from the model
+        rewards_flat = model(
+            input_ids=input_ids_flat,
+            attention_mask=attention_mask_flat,
+            persona_embeddings=persona_embeddings_flat, images=images
+        ).rewards
 
+        # Un-flatten the rewards
+        rewards = einops.rearrange(rewards_flat, "(b c) -> b c", c=num_candidates)
 
-        rewards_flat = outputs.rewards
-        rewards = einops.rearrange(
-            rewards_flat, "(b c) -> b c", c=num_candidates
-        )  # Size: (bsz, num_candidates).
-
+        # Separate chosen and rejected rewards
+        # Here we assume the first candidate is chosen and the second is rejected.
         rewards_0, rewards_1 = tuple(
             batch_select(rewards, index) for index in (index_0, index_1)
         )  # Size: (bsz, num_pairs).
@@ -347,7 +391,7 @@ class RewardModelTrainer(transformers.Trainer):
         # print(loss)
         logged_rewards = torch.stack((rewards_1, rewards_0), dim=-1)
 
-  #      import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         return (loss, dict(logits=logged_rewards)) if return_outputs else loss
 
 

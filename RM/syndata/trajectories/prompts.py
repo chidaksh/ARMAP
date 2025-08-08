@@ -32,35 +32,35 @@ Output Format:
 Return the output as a valid JSON object shown below:
 
 {{
-    "domain": "<ML Domain label for the plan generated>",
-    "plan": "<Your plan here>"
+    "plan": "<Your correct plan here>"
 }}
 """
 
 FLAW_GENERATION_PROMPT_TEMPLATE = """
-You are an expert red-teamer tasked with identifying subtle weaknesses in ML project plans. Your goal is to generate flaws that can be injected into the correct plan for the following ML-related task query.
+You are an expert assistant specializing in evaluating and modifying strategic plans. Your goal is to brainstorm ways a correct plan could be made less optimal or less preferred.
+
+The following is the Task Query:
 - Task Query: {task_query}
 
 Company's ML Maturity Profile:
 - ML Maturity Level: {persona_level}
 - Description: {persona_description}
 
-Correct Plan: {correct_plan}
+Correct Plan:
+{correct_plan}
 
 Your Task:
-Generate 1-2 subtle flaws that can be injected into the provided plan to make it less preferred while still being appropriate for the company's ML maturity level. The steps should be short (1-2 sentences) and concise.
-
-Ensure:
-- The flaws are subtle and not factually wrong
-- A modified plan with these flaws injected into the correct plan, is still appropriate for the company's ML maturity level.
+Based on the correct plan, generate 2-3 creative ideas for an alternative, less-preferred plan. The ideas should be concise (1-2 sentences). Ensure that these ideas when injected into the correct plan do not change the plan's ML maturity.
 
 Output Format:
-Return only a numbered list of the flaws.
-[1. <Flaw 1>, 2. <Flaw 2>]
+Return the output as a valid JSON object shown below:
+{{
+    "degradation_ideas": <return a list of 2-3 strategic degradation ideas>
+}}
 """
 
 NEG_PROMPT_TEMPLATE = """
-You are an expert in identifying common pitfalls in ML project planning. Your goal is to take a correct plan and generate a plan that is less preferred for the following ML-related task query.
+You are an expert assistant in generating negative preference data. Your goal is to take a correct plan and generate a plan that is less preferred for the following ML-related task query.
 - Task Query: {task_query}
 
 Company's ML Maturity Profile:
@@ -69,7 +69,7 @@ Company's ML Maturity Profile:
 
 Correct Plan: {correct_plan}
 
-Inject the following flaws in the plan:
+Inject the below degradation ideas into the correct plan:
 {flaws}
 
 Your Task:

@@ -5,7 +5,7 @@ set -x
 
 export CUDA_VISIBLE_DEVICES=0,1
 export DATA_DIR="data"
-export MODEL_DIR="rm"
+export MODEL_DIR="."
 export PYTHONPATH="$PWD:$PYTHONPATH"
 export GPUS_PER_NODE=2
 export OMP_NUM_THREADS=2

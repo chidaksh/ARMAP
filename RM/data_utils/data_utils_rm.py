@@ -19,6 +19,7 @@ import logging
 from typing import Callable, Optional, Dict, Sequence, List, Tuple
 
 import random
+from sklearn.model_selection import train_test_split
 
 import einops
 import pandas as pd
@@ -81,7 +82,7 @@ def preprocess_for_reward_modeling(
 
     if 'company_id' in list_dict_data[0]:
         company_id = torch.tensor(
-            [[dict_data['company_id']] for dict_data in list_dict_data]
+            [[int(dict_data['company_id'])] for dict_data in list_dict_data]
         )
 
     def _get_text(example: dict, output_key: str):
@@ -305,6 +306,7 @@ class BinaryRewardModelingDataset(Dataset):
         )
         # print(data_dict["id"][0])
         if isinstance(i, int):
+            company_id_value = data_dict.get("company_id")
             data_dict = dict(
                 input_ids=data_dict["input_ids"][0],
                 labels=data_dict["labels"][0],
@@ -313,6 +315,8 @@ class BinaryRewardModelingDataset(Dataset):
                 index_0=data_dict["index_0"][0],
                 index_1=data_dict["index_1"][0],
             )
+            if company_id_value is not None:
+                data_dict["company_id"] = company_id_value[0]
 
         # image exist in the data
         if "image" in self.list_data_dict[i] and "<image>" in self.list_data_dict[i]["conversations"][0]["value"]:
@@ -454,60 +458,138 @@ class DataCollatorForBinaryRewardModelingDataset(object):
             batch["company_id"] = company_id
 
         return batch
+    
+@dataclass
+class PersonaAwareDataCollator(DataCollatorForBinaryRewardModelingDataset):
+    """
+    A data collator that, in addition to tokenizing trajectories,
+    generates persona embeddings on the fly for each item in the batch.
+    """
+    tokenizer: transformers.PreTrainedTokenizer
+    persona_model: any
+    persona_tokenizer: any
+    knowledge_base_path: str
+    max_length: int
+
+    def __post_init__(self):
+        super().__init__(self.tokenizer)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.persona_model.to(self.device)
+        self.persona_model.eval()
+        try:
+            with open(self.knowledge_base_path, "r", encoding="utf-8") as f:
+                self.knowledge_base_map = json.load(f)
+        except FileNotFoundError:
+            logger.error(f"Knowledge base file not found at {self.knowledge_base_path}")
+            self.knowledge_base_map = []
+
+    def __call__(self, instances: Sequence[Dict]) -> Dict[str, torch.Tensor]:
+        batch = super().__call__(instances)
+        company_ids = [instance["company_id"] for instance in instances]
+        persona_embeddings = []
+
+        with torch.no_grad():
+            for company_id in company_ids:
+                try:
+                    knowledge_file_path = self.knowledge_base_map[company_id.item()]['knowledge_file_path']
+                    # Ensure the path includes the data/ prefix if not already present
+                    if not knowledge_file_path.startswith('data/'):
+                        knowledge_file_path = f"data/{knowledge_file_path}"
+                    with open(knowledge_file_path, "r", encoding="utf-8") as f:
+                        knowledge_text = f.read()
+                except (FileNotFoundError, IndexError) as e:
+                    logger.error(f"Could not load knowledge for company_id '{company_id.item()}': {e}")
+                    persona_embeddings.append(torch.zeros(self.persona_model.embedding_dim).cpu())
+                    continue
+                
+                inputs = self.persona_tokenizer(
+                    knowledge_text,
+                    return_tensors="pt",
+                    max_length=1024,
+                    truncation=True,
+                    padding="max_length"
+                ).to(self.device)
+                
+                _ = self.persona_model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
+                embedding = self.persona_model.get_last_embedding()
+                # Properly detach and move to CPU to avoid pin memory issues
+                persona_embeddings.append(embedding.squeeze(0).detach().cpu())
+
+        batch["persona_embeddings"] = torch.stack(persona_embeddings)
+        return batch
 
 def make_binary_reward_modeling_data_module(
     tokenizer: transformers.PreTrainedTokenizer,
     data_args,
     training_args,
+    do_train = True,
     persona_model=None,
     persona_tokenizer=None,
-    knowledge_base_path=None,
 ):
-    if data_args.dataset_path.endswith("json"):
-        train_preference = load_dataset("json", data_files=data_args.dataset_path)[
-            "train"
-        ]
+    if persona_model and persona_tokenizer and data_args.knowledge_base_path:
+        logger.info("Running Persona-Aware data pipeline.")
+
+        train_preference = load_dataset("json", data_files=data_args.dataset_path)["train"]
         use_data_frame = False
-    else:
-        raise ValueError(
-            f"Unsupported dataset_path: {data_args.dataset_path}."
-            "Only json datasets are supported."
+        train_dataset = BinaryRewardModelingDataset(
+            data=train_preference,
+            tokenizer=tokenizer,
+            query_len=training_args.query_len,
+            response_len=training_args.response_len,
+            use_data_frame=use_data_frame,
+            data_args=data_args,
+        )
+        
+        train_dataset, eval_dataset = split_train_into_train_and_eval(
+            train_dataset=train_dataset,
+            eval_size=data_args.eval_size,
+            seed=training_args.seed,
         )
 
-    train_dataset = BinaryRewardModelingDataset(
-        data=train_preference,
-        tokenizer=tokenizer,
-        query_len=training_args.query_len,
-        response_len=training_args.response_len,
-        use_data_frame=use_data_frame,
-        data_args=data_args,
-    )
-
-    if do_train:
-        if (
-            data_args.dataset_path == data_args.eval_dataset_path
-            and data_args.dataset_name == data_args.eval_dataset_name
-        ):
-            train_dataset, eval_dataset = split_train_into_train_and_eval(
-                train_dataset=train_dataset,
-                eval_size=data_args.eval_size,
-                seed=training_args.seed,
-            )
-
-        else:
-            raise NotImplementedError
-    else:
-        eval_dataset = train_dataset
-
-    if persona_model and persona_tokenizer and knowledge_base_path:
+        logger.info(f"Data split: {len(train_dataset)} training, {len(eval_dataset)} eval samples.")        
         data_collator = PersonaAwareDataCollator(
             tokenizer=tokenizer,
             persona_model=persona_model,
             persona_tokenizer=persona_tokenizer,
-            knowledge_base_path=knowledge_base_path,
+            knowledge_base_path=data_args.knowledge_base_path,
             max_length=training_args.model_max_length,
         )
     else:
+        if data_args.dataset_path.endswith("json"):
+            train_preference = load_dataset("json", data_files=data_args.dataset_path)[
+                "train"
+            ]
+            use_data_frame = False
+        else:
+            raise ValueError(
+                f"Unsupported dataset_path: {data_args.dataset_path}."
+                "Only json datasets are supported."
+            )
+
+        train_dataset = BinaryRewardModelingDataset(
+            data=train_preference,
+            tokenizer=tokenizer,
+            query_len=training_args.query_len,
+            response_len=training_args.response_len,
+            use_data_frame=use_data_frame,
+            data_args=data_args,
+        )
+
+        if do_train:
+            if (
+                data_args.dataset_path == data_args.eval_dataset_path
+                and data_args.dataset_name == data_args.eval_dataset_name
+            ):
+                train_dataset, eval_dataset = split_train_into_train_and_eval(
+                    train_dataset=train_dataset,
+                    eval_size=data_args.eval_size,
+                    seed=training_args.seed,
+                )
+
+            else:
+                raise NotImplementedError
+        else:
+            eval_dataset = train_dataset
         data_collator = DataCollatorForBinaryRewardModelingDataset(tokenizer=tokenizer)
 
     return dict(

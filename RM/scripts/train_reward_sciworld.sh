@@ -4,11 +4,11 @@ set -e
 set -x
 
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export CUDA_VISIBLE_DEVICES=0,1
 export DATA_DIR="data"
-export MODEL_DIR="rm"
+export MODEL_DIR="."
 export PYTHONPATH="$PWD:$PYTHONPATH"
-export GPUS_PER_NODE=8
+export GPUS_PER_NODE=2
 export OMP_NUM_THREADS=8
 
 # MODEL CONFIG
@@ -17,9 +17,9 @@ LM_MODEL_NAME=VILA1.5-3b
 MM_PROJECTOR=VILA1.5-3b/mm_projector
 
 # DATA CONFIG
-PREFERENCE_DATA=sciworld_preference.json
-CAPTION_DATA=sciworld_factual.json
-IMAGE_FOLDER=sciworld_image
+PREFERENCE_DATA=ARMAP-RM-SciWorld/sciworld_preference.json
+CAPTION_DATA=ARMAP-RM-SciWorld/sciworld_factual.json
+IMAGE_FOLDER=ARMAP-RM-SciWorld/sciworld_image
 
 # SAVE CONFIG
 MODEL_NAME=RM-sciworld
