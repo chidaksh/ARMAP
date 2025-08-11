@@ -9,7 +9,10 @@ __pycache__/
 *.ckpt
 
 # Data & Output
-data/
+RM/data/ARMAP-RM-SciWorld/
+RM/data/ARMAP-RM-WebShop/
+# RM/data/pavo/persona
+RM/data/pavo/pavo_image
 output/
 
 # Other
